@@ -5,7 +5,6 @@ from datetime import datetime
 
 def test_task(**kwargs):
     value = "Hello XCom"
-    # تخزين القيمة في XCom
     kwargs['ti'].xcom_push(key='message', value=value)
 
 with DAG(
