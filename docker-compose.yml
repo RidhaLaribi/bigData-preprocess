@@ -37,18 +37,29 @@ services:
       AIRFLOW__CORE__EXECUTOR: SequentialExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/analytics
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      _PIP_ADDITIONAL_REQUIREMENTS: >
+        pandas numpy scikit-learn boto3
     volumes:
       - ./dags:/opt/airflow/dags
       - ./scripts:/opt/airflow/scripts
+      - ./data:/opt/airflow/data
     ports:
       - "8080:8080"
     command: >
       bash -c "
-      airflow db init &&
-      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@test.com &&
-      airflow webserver
-      "
+            airflow db migrate &&
+            airflow users create
+              --username admin
+              --password admin
+              --firstname Admin
+              --lastname User
+              --role Admin
+              --email admin@example.com || true &&
+            airflow webserver & airflow scheduler
+            "
 
 volumes:
+
+
   postgres_data:
   minio_data:
