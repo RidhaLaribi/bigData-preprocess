@@ -43,8 +43,13 @@ def clean(ti, **kwargs):
 
 
 def transform_data(ti,**kwargs):
+    for f in ['/tmp/clean.parquet', '/tmp/transformed.parquet', '/tmp/final.parquet']:
+        if os.path.exists(f):
+            ti.xcom_push(key='col', value="delete")
+
+            os.remove(f)
+
     df = pd.read_parquet("/tmp/trans.parquet")
-    # ti.xcom_push(key='col', value=df.select_dtypes(include='number').columns)
 
     for col in df.select_dtypes(include='number').columns:
         mean, std = df[col].mean(), df[col].std()
@@ -56,6 +61,12 @@ def transform_data(ti,**kwargs):
 def aggregate_data(ti,**kwargs):
     import os
     import pandas as pd
+    for f in ['/tmp/clean.parquet', '/tmp/trans.parquet', '/tmp/final.parquet']:
+        if os.path.exists(f):
+            ti.xcom_push(key='col', value="delete")
+
+            os.remove(f)
+
 
     file_path = "/tmp/transformed.parquet"
     if not os.path.exists(file_path):
@@ -71,7 +82,14 @@ def aggregate_data(ti,**kwargs):
     agg.to_parquet("/tmp/final.parquet")
     ti.xcom_push(key='aggregate_status', value='done')
 
-def load_to_postgres(**kwargs):
+def load_to_postgres(ti,**kwargs):
+
+    for f in ['/tmp/clean.parquet', '/tmp/trans.parquet', '/tmp/transformed.parquet']:
+        if os.path.exists(f):
+            ti.xcom_push(key='col', value="delete")
+
+            os.remove(f)
+
     engine = create_engine('postgresql://airflow:airflow@postgres:5432/analytics')
     df = pd.read_parquet('/tmp/final.parquet')
     df.to_sql('final_table', engine, if_exists='replace', index=False)
